@@ -1,19 +1,15 @@
-Author: {FirstName LastName} [{UA Email}]  
-Course: Grad 533 or Undergrad 433
-Date: [Month]. [Day], 2025
-
-**PLEASE UPDATE THIS README TO INCLUDE:**
-* a text description of how to run your program, 
-* document any idiosyncrasies, behaviors, or bugs of note that you want us to be aware of when grading, and
-* any other comments that you feel are relevant.
+Author: Colin Hannan cjh63@ariazona.edu]  
+Course: Undergrad 433
+Date: Februrary. 7, 2025
 
 Executing program:
-
+Run the html file and add a picture from the files.
 
 Description:
+Program was made to take an image from and rotate it around the center of canvas, the image is centered on the canvas and thrre is an animation to track the angle.
 
 
-Included files (**PLEASE ADD/UPDATE THIS LIST**):
+Included files:
 * index.html    -- a sample html file with a canvas
 * a01.js        -- a sample javascript file for functionality with the image uploading, and a method to parse PPM images
 * MathUtilities.js		-- some math functions that you can use and extend yourself. It contains matrix manipulations
@@ -23,3 +19,5 @@ Included files (**PLEASE ADD/UPDATE THIS LIST**):
 **PLEASE PROVIDE ANY ATTRIBUTION HERE**
 * Images obtained from the following sources:
   * bunny: http://graphics.stanford.edu/data/3Dscanrep/  
+
+Problems: The code has extra artifacts from the rotations since the loop is not looking for the actual code.
