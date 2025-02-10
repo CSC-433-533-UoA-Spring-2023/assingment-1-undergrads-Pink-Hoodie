@@ -16,6 +16,8 @@ var width = 0;
 var height = 0;
 // The image data
 var ppm_img_data;
+var previousTime = 0.0;
+var degreesPerSecond = 360/30;
 
 //Function to process upload
 var upload = function () {
@@ -30,46 +32,69 @@ var upload = function () {
             //if successful, file data has the contents of the uploaded file
             var file_data = fReader.result;
             parsePPM(file_data);
-
-            /*
-            * TODO: ADD CODE HERE TO DO 2D TRANSFORMATION and ANIMATION
-            * Modify any code if needed
-            * Hint: Write a rotation method, and call WebGL APIs to reuse the method for animation
-            */
-	    
-            // *** The code below is for the template to show you how to use matrices and update pixels on the canvas.
-            // *** Modify/remove the following code and implement animation
-
-	    // Create a new image data object to hold the new image
-            var newImageData = ctx.createImageData(width, height);
-	    var transMatrix = GetTranslationMatrix(0, height);// Translate image
-	    var scaleMatrix = GetScalingMatrix(1, -1);// Flip image y axis
-	    var matrix = MultiplyMatrixMatrix(transMatrix, scaleMatrix);// Mix the translation and scale matrices
-            
-            // Loop through all the pixels in the image and set its color
-            for (var i = 0; i < ppm_img_data.data.length; i += 4) {
-
-                // Get the pixel location in x and y with (0,0) being the top left of the image
-                var pixel = [Math.floor(i / 4) % width, 
-                             Math.floor(i / 4) / width, 1];
         
-                // Get the location of the sample pixel
-                var samplePixel = MultiplyMatrixVector(matrix, pixel);
+            // Initial Call to start the animation recursion.
+            rotateImage(0);
 
-                // Floor pixel to integer
-                samplePixel[0] = Math.floor(samplePixel[0]);
-                samplePixel[1] = Math.floor(samplePixel[1]);
-
-                setPixelColor(newImageData, samplePixel, i);
-            }
-
-            // Draw the new image
-            ctx.putImageData(newImageData, canvas.width/2 - width/2, canvas.height/2 - height/2);
-	    
-	    // Show matrix
-            showMatrix(matrix);
         }
     }
+}
+
+// Provide the transformation matrix to rotate the image around the center of the image.
+function imageRotationMatrix(theta,xOffset,yOffset){
+    var translationToImageCenterMatrix = GetTranslationMatrix(xOffset, yOffset);
+    var rotationMatrix = GetRotationMatrix(-theta);
+    var translationToCanvasCenterMatrix = InverseMatrix3x3(translationToImageCenterMatrix);
+    var transformationMatrix1 = MultiplyMatrixMatrix(translationToImageCenterMatrix,rotationMatrix);
+    var transformationMatrix2 = MultiplyMatrixMatrix(transformationMatrix1, translationToCanvasCenterMatrix);
+    // Our resulting point is (X',Y'), our source point is (X, Y). 
+    // Translate to the center of canvas is T
+    // Translate to image center is T'
+    // Rotation counter clockwise by theta is M_theta
+    // Let V_S = (X, Y, 1), V_T = (X', Y', 1)
+    // Then V_T = T'*M_theta*T*V_S
+    // So T*V_T = M_theta*T*V_S
+    // So M_theta'*T*V_T = T*V_S
+    // So V_S = T'*M_theta'*T*V_T
+    // So V_S = (T'*M_theta')*T*V_T = ((T'*M_theta')*T)*V_T
+    return transformationMatrix2;
+}
+
+// Rotate the original image by theta degrees and animate it.
+function rotateImage(theta){
+    var newImageData = ctx.createImageData(width, height);
+    var xOffset = width/2;
+    var yOffset = height/2;
+    var newRotationMatrix = imageRotationMatrix(theta,xOffset,yOffset);
+    //#TODO: Reconfigure it so we are reading from the image.
+    for (var i = 0; i < ppm_img_data.data.length; i += 4) {
+        // Get the pixel location in x and y with (0,0) being the top left of the image
+        var pixel = [Math.floor(i / 4) % width, 
+                     Math.floor(i / 4) / width, 1];
+
+        // Get the location of the sample pixel
+        var samplePixel = MultiplyMatrixVector(newRotationMatrix, pixel);
+
+        // Floor pixel to integer
+        samplePixel[0] = Math.floor(samplePixel[0]);
+        samplePixel[1] = Math.floor(samplePixel[1]);
+
+        setPixelColor(newImageData, samplePixel, i);
+    }
+
+    // Draw the new image
+    ctx.putImageData(newImageData, canvas.width/2 - width/2, canvas.height/2 - height/2);
+    showMatrix(newRotationMatrix);
+
+    // WebGL API used for animation.
+    requestAnimationFrame((currentTime) => {
+        theta = (theta+degreesPerSecond)%360;
+    
+        previousTime = currentTime;
+        rotateImage(theta);
+    });
+    
+
 }
 
 // Show transformation matrix on HTML
